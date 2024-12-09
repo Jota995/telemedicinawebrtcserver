@@ -24,23 +24,33 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  socket.on('offer', (offer) => {
-      console.log('Received offer');  // Log when offer is received
-      socket.broadcast.emit('offer', offer);  // Broadcast the offer to all other connected clients
+  // Unirse a una sala
+  socket.on('join-room', (roomId) => {
+    console.log(`Usuario ${socket.id} se unió a la sala ${roomId}`);
+    socket.join(roomId);
   });
 
-  socket.on('answer', (answer) => {
-      console.log('Received answer');  // Log when answer is received
-      socket.broadcast.emit('answer', answer);  // Broadcast the answer back to the caller
+  // Reenviar oferta
+  socket.on('offer', (data) => {
+    const { roomId, offer } = data;
+    socket.to(roomId).emit('offer', { offer });
   });
 
-  socket.on('candidate', (candidate) => {
-      console.log('Received candidate');  // Log when candidate is received
-      socket.broadcast.emit('candidate', candidate);  // Broadcast candidate to the other peer
+  // Reenviar respuesta
+  socket.on('answer', (data) => {
+    const { roomId, answer } = data;
+    socket.to(roomId).emit('answer', { answer });
   });
 
+  // Reenviar candidatos ICE
+  socket.on('candidate', (data) => {
+    const { roomId, candidate } = data;
+    socket.to(roomId).emit('candidate', { candidate });
+  });
+
+  // Desconexión
   socket.on('disconnect', () => {
-      console.log('Client disconnected');
+    console.log('Usuario desconectado:', socket.id);
   });
 });
 
